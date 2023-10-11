@@ -79,18 +79,17 @@ class Car {
 		this.animateSprite();
 
 		if (this.actions.right) {
-			this.x += this.vx;
-
-			if (this.x + this.w > this.canvasW) {
-				this.x = -this.w;
+			if ( this.x < 393){
+			this.x += this.vx
 			}
+		
 		}
 		if (this.actions.left) {
-			this.x -= this.vx;
+			if ( this.x > 10){
+				this.x -= this.vx
+				}
 
-			if (this.x < -this.w) {
-				this.x = this.canvasW;
-			}
+		
 		}
 	}
 }
