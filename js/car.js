@@ -75,6 +75,16 @@ class Car {
 		}
 	}
 
+	getCollisionRect() {
+        
+        return {
+            x: this.x ,
+            y: this.y ,
+            width: this.w-70,
+            height: this.h -119.5,
+        };
+    }
+
 	move() {
 		this.animateSprite();
 

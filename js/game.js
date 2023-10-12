@@ -1,87 +1,110 @@
 const Game = {
-	ctx: undefined,
-	canvasW: undefined,
-	canvasH: undefined,
-	fps: 60,
-	keys: {
-		RIGHT: 'KeyD',
-		LEFT: 'KeyA',
-	},
+    ctx: undefined,
+    canvasW: undefined,
+    canvasH: undefined,
+    fps: 60,
+    keys: {
+        RIGHT: 'KeyD',
+        LEFT: 'KeyA',
+    },
+    score: 0, 
 
-	init: function () {
-		console.log('Test');
-		const canvas = document.querySelector('canvas');
-		this.ctx = canvas.getContext('2d');
+    init: function () {
+        const canvas = document.querySelector('canvas');
+        this.ctx = canvas.getContext('2d');
+        this.canvasW = canvas.width;
+        this.canvasH = canvas.height;
+        this.reset();
+    },
 
-		this.canvasW = canvas.width;
-		this.canvasH = canvas.height;
+    reset: function () {
+        this.background = new Background(this.ctx, this.canvasW, this.canvasH);
+        this.car = new Car(this.ctx, this.canvasW, this.canvasH, this.keys);
+        this.obstacles = [];
+        this.start();
+    },
 
-		this.reset();
-		
-	},
+    generateObstacle: function () {
+        this.obstacles.push(
+            new Obstacle(this.ctx, this.canvasW, this.canvasH, this.car.h)
+        );
+    },
 
-	reset: function () {
-		console.log('Reset');
-		this.background = new Background(this.ctx, this.canvasW, this.canvasH);
-		this.car = new Car(this.ctx, this.canvasW, this.canvasH, this.keys);
-		this.obstacles = []
-		this.start();
-	},
+    start: function () {
+        this.frameCounter = 0;
+        this.intervalId = setInterval(() => {
+            this.ctx.clearRect(0, 0, this.canvasW, this.canvasH);
+            this.background.draw();
+            this.car.move();
+            this.car.draw();
 
-	start: function () {
-		this.frameCounter = 0
-		this.intervalId = setInterval(() => {
-			this.ctx.clearRect(0, 0, this.canvasW, this.canvasH);
-			this.background.draw();
-			this.car.move();
-			this.car.draw();
-			if (this.frameCounter % 50 === 0) {
-				this.generateObstacle()
-			}
-			if (this.isCollision()) {
-				// this.gameOver()
-			}
-			this.clearObstacles()
-			console.log(this.obstacles)
-		}, 1000 / this.fps);
-	},
+            this.obstacles.forEach((obstacle, index) => {
+                obstacle.move();
+                obstacle.draw();
+
+                if (obstacle.y > this.car.y + this.car.h) {
+                    
+                    this.score += 1;
+                    this.obstacles.splice(index, 1); 
+                }
+            });
+
+            if (this.frameCounter % 100 === 0) {
+                this.generateObstacle();
+            }
+
+            if (this.isCollision()) {
+                this.gameOver();
+            }
+
+            this.clearObstacles();
+
+            this.drawScoreboard(); 
+
+            this.frameCounter++;
+        }, 1000 / this.fps);
+    },
 
 	gameOver: function () {
-		// para el intervalo que implementa el loop de animación
-		clearInterval(this.intervalId)
-
-		if (confirm('GAME OVER! ¿Volver a jugar?')) {
-			this.reset()
+		clearInterval(this.intervalId);
+		alert(`GAME OVER! Puntuación final: ${this.score}`); 
+	
+		this.score = 0; 
+	
+		if (confirm('¿Volver a jugar?')) {
+			this.reset();
 		}
 	},
 
-	generateObstacle: function () {
-		this.obstacles.push(
-			new Obstacle(this.ctx, this.canvasW, this.player.h)
-			
-		)
-		this.obstacles.forEach((obstacle) => {
-			obstacle.draw()
-		})
-	},
+    isCollision: function () {
+        const carRect = this.car.getCollisionRect();
 
-	isCollision: function () {
-		return this.obstacles.some(
-			(obstacle) =>
-				obstacle.x + 10 < this.player.x + this.player.w &&
-				obstacle.x + obstacle.w > this.player.x &&
-				obstacle.y + obstacle.h > this.player.y &&
-				obstacle.y < this.player.y + this.player.h
-		)
-	},
+        return this.obstacles.some((obstacle) => {
+            const obstacleRect = obstacle.getCollisionRect();
+            return (
+                carRect.x < obstacleRect.x + obstacleRect.width &&
+                carRect.x + carRect.width > obstacleRect.x &&
+                carRect.y < obstacleRect.y + obstacleRect.height &&
+                carRect.y + carRect.height > obstacleRect.y
+            );
+        });
+    },
 
-	clearObstacles: function () {
-		this.obstacles = this.obstacles.filter(
-			(obstacle) => obstacle.x + obstacle.w > 0
-		)
-	},
+    drawScoreboard: function () {
+        this.ctx.fillStyle = 'black';
+        this.ctx.fillRect(0, 0, this.canvasW, 50);
+        this.ctx.fillStyle = 'yellow';
+        this.ctx.font = '24px Arial';
+        this.ctx.fillText(`Score: ${this.score}`, 20, 30);
+    },
 
-	clear: function () {
-		this.ctx.clearRect(0, 0, this.canvasW, this.canvasH)
-	},
-}
+    clearObstacles: function () {
+        this.obstacles = this.obstacles.filter(
+            (obstacle) => obstacle.x + obstacle.w > 0
+        );
+    },
+
+    clear: function () {
+        this.ctx.clearRect(0, 0, this.canvasW, this.canvasH);
+    },
+};
